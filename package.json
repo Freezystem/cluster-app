@@ -17,7 +17,8 @@
     "babel-preset-es2015": "^6.22.0",
     "babel-preset-stage-0": "^6.22.0",
     "jest": "^18.1.0",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "watchman": "^0.1.8"
   },
   "babel": {
     "presets": [
