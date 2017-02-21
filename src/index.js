@@ -1,24 +1,27 @@
 import cluster  from 'cluster';
-import http     from 'http';
+import express  from 'express';
 import os       from 'os';
 
 const cpus = os.cpus();
+const app  = express();
 
 if ( cluster.isMaster ) {
-  console.log(`App running on ${cpus.length} ${cpus.length > 1 ? 'cpus' : 'cpu'}`);
-  console.log(`Master ${process.pid} is running`);
+  console.log(`Master cluster ${process.pid} setting up ${cpus.length} ${cpus.length > 1 ? 'workers' : 'worker'}`);
 
   cpus.forEach(() => cluster.fork());
 
-  cluster.on('exit', ( worker, code, signal ) => {
-    console.log(`worker ${worker.process.pid} died`, code, signal);
-  });
-} 
-else {
-  http.createServer(( req, res ) => {
-    res.writeHead(200);
-    res.end(`hello world from ${process.pid}`);
-  }).listen(8000);
+  cluster.on('online', worker => console.log('Worker ' + worker.process.pid + ' is online'));
 
-  console.log(`Worker ${process.pid} started`);
+  cluster.on('exit', ( worker, code, signal ) => {
+    console.log(`Worker ${worker.process.pid} died`, code, signal);
+    cluster.fork();
+  });
 }
+else {
+  app.listen(8000);
+  app.get('/', ( req, res ) => {
+    res.end(`Hello World from worker ${process.pid}`);
+  });
+}
+
+export default app;
