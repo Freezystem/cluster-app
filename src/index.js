@@ -24,11 +24,11 @@ if ( cluster.isMaster ) {
   cluster.on('message', ( worker, message ) => {
     if ( message.cmd === 'notifyRequest' ) requestCount++;
 
-    log(`${FgBlue}from worker(${worker.process.pid}) #${worker.id} to master(${process.pid}): ${message.cmd}`);
+    log(`${FgBlue}from worker(${Reset}${worker.process.pid}${FgBlue}) ${FgYellow}#${worker.id}${FgBlue} to master(${Reset}${process.pid}${FgBlue}): ${message.cmd}`);
     cluster.workers[worker.id].send({ cmd : 'notifyReceived', requestCount });
   });
 }
 else {
-  process.on('message', message => log(`${FgCyan}from master to worker(${process.pid}): ${message.cmd}`));
+  process.on('message', message => log(`${FgCyan}from master to worker(${Reset}${process.pid}${FgCyan}): ${message.cmd} ${FgYellow}#${message.requestCount}`));
   require('./server');
 }
