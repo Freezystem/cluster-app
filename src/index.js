@@ -1,26 +1,34 @@
-import cluster            from 'cluster';
-import os                 from 'os';
+import cluster  from 'cluster';
+import os       from 'os';
+import colors   from './helpers/colors';
 
-let requestCount  = 0;
-const cpus        = os.cpus();
+let requestCount    = 0;
+const cpus          = os.cpus();
+const { log, warn } = console;
+const { 
+  FgCyan, 
+  FgBlue, 
+  FgYellow,
+  Reset 
+}                   = colors;
 
 if ( cluster.isMaster ) {
-  console.log(`Master cluster ${process.pid} setting up ${cpus.length} ${cpus.length > 1 ? 'workers' : 'worker'}`);
+  log(`Master cluster ${FgBlue}${process.pid}${Reset} setting up ${FgYellow}${cpus.length}${Reset} ${cpus.length > 1 ? 'workers' : 'worker'}`);
 
   cpus.forEach(() => cluster.fork());
 
-  cluster.on('online', worker => console.log('Worker ' + worker.process.pid + ' is online'));
+  cluster.on('online', worker => log(`Worker ${FgCyan}${worker.process.pid}${Reset} is online`));
 
-  cluster.on('exit', ( worker, code, signal ) => console.log(`Worker ${worker.process.pid} died`, code, signal));
+  cluster.on('exit', ( worker, code, signal ) => warn(`Worker ${worker.process.pid} died`, code, signal));
 
   cluster.on('message', ( worker, message ) => {
     if ( message.cmd === 'notifyRequest' ) requestCount++;
 
-    console.log(`from worker #${worker.id}:`, worker.process.pid , 'to master:', process.pid, message);
-    console.log('requestCount:', requestCount);
+    log(`${FgBlue}from worker(${worker.process.pid}) #${worker.id} to master(${process.pid}): ${message.cmd}`);
+    cluster.workers[worker.id].send({ cmd : 'notifyReceived', requestCount });
   });
 }
 else {
-  process.on('message', message => console.log('worker', process.pid, message));
+  process.on('message', message => log(`${FgCyan}from master to worker(${process.pid}): ${message.cmd}`));
   require('./server');
 }
